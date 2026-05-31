@@ -73,7 +73,10 @@ def _serialize_line(line, detail=False):
             f'?unique={line.write_date}') if line.proof_signature else None
         # Status timeline based on the trip line transitions
         ts = []
-        ts.append(('confirmed', o.confirmation_date or o.create_date))
+        # Odoo 18 dropped sale.order.confirmation_date; date_order is the
+        # closest equivalent (it gets stamped to confirmation time on
+        # action_confirm). Fall back to create_date for drafts.
+        ts.append(('confirmed', o.date_order or o.create_date))
         if line.delivery_status in ('received','in_transit','delivered','failed','returned'):
             ts.append(('picked',  line.create_date))
         if line.delivery_status in ('in_transit','delivered'):
