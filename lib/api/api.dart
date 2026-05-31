@@ -368,18 +368,23 @@ class OrderSummary {
       required this.addrShort, required this.amount, required this.paymentMethod,
       required this.itemCount, required this.createdAt});
   factory OrderSummary.fromJson(Map<String, dynamic> j) {
-    final c = (j['customer'] as Map?)?.cast<String, dynamic>() ?? const {};
-    final a = (j['address'] as Map?)?.cast<String, dynamic>() ?? const {};
+    // Dashboard returns customer/addr_short as flat strings; orders/list
+    // returns them as nested {name, phone} / {short, street, ...}.
+    // `as Map?` blows up on a String, so we have to type-check first.
+    final cRaw = j['customer'];
+    final aRaw = j['address'];
+    final mRaw = j['amount'] ?? j['total'];
+    final c = cRaw is Map ? cRaw.cast<String, dynamic>() : const <String, dynamic>{};
+    final a = aRaw is Map ? aRaw.cast<String, dynamic>() : const <String, dynamic>{};
     return OrderSummary(
       id: (j['id'] ?? 0) as int,
       lineId: (j['line_id'] ?? 0) as int,
       name: (j['name'] ?? '').toString(),
       status: (j['status'] ?? '').toString(),
       statusLabel: BL.fromJson(j['status_label']),
-      customer: (c['name'] ?? j['customer'] ?? '').toString(),
-      addrShort: (a['short'] ?? j['addr_short'] ?? '').toString(),
-      amount: Money.fromJson((j['amount'] as Map?)?.cast<String, dynamic>()
-        ?? (j['total'] as Map?)?.cast<String, dynamic>()),
+      customer: (c['name'] ?? (cRaw is String ? cRaw : '') ?? '').toString(),
+      addrShort: (a['short'] ?? (j['addr_short'] is String ? j['addr_short'] : '') ?? '').toString(),
+      amount: Money.fromJson(mRaw is Map ? mRaw.cast<String, dynamic>() : null),
       paymentMethod: (j['payment_method'] ?? '').toString(),
       itemCount: (j['item_count'] ?? 0) as int,
       createdAt: (j['created'] ?? '').toString(),
@@ -408,8 +413,10 @@ class OrderDetail extends OrderSummary {
       required this.timeline});
   factory OrderDetail.fromJson(Map<String, dynamic> j) {
     final base = OrderSummary.fromJson(j);
-    final c = (j['customer'] as Map?)?.cast<String, dynamic>() ?? const {};
-    final a = (j['address'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final cRaw = j['customer'];
+    final aRaw = j['address'];
+    final c = cRaw is Map ? cRaw.cast<String, dynamic>() : const <String, dynamic>{};
+    final a = aRaw is Map ? aRaw.cast<String, dynamic>() : const <String, dynamic>{};
     final tl = ((j['timeline'] as List?) ?? const [])
         .map((e) => TimelineStep.fromJson((e as Map).cast<String, dynamic>())).toList();
     return OrderDetail(
