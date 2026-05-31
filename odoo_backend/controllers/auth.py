@@ -50,10 +50,17 @@ class DriverAuthAPI(http.Controller):
             ], limit=1)
         if not user:
             return fail('INVALID_CREDENTIALS', 'No driver with that phone/email', 401)
+        # Odoo 18: use _check_credentials with a credential dict (the
+        # old session.authenticate signature was removed).
         try:
-            request.session.authenticate(request.db, user.login, password)
-        except Exception:
+            from odoo.exceptions import AccessDenied
+            user.with_user(user.id)._check_credentials(
+                {'password': password, 'type': 'password'},
+                {'interactive': False})
+        except AccessDenied:
             return fail('INVALID_CREDENTIALS', 'Wrong password', 401)
+        except Exception as e:
+            return fail('INVALID_CREDENTIALS', f'Auth failed: {e}', 401)
         driver = request.env['delivery.driver'].sudo().search(
             [('portal_user_id', '=', user.id)], limit=1)
         if not driver:
