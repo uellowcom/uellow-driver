@@ -5,10 +5,13 @@
 //   • Reactive lang via ValueListenableBuilder over DriverApi.langNotifier.
 //   • Directionality wrap in `builder:` for instant RTL toggle.
 // =============================================================================
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'api/api.dart';
+import 'fcm_service.dart';
 import 'theme/theme.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -28,6 +31,7 @@ import 'screens/help_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DriverApi.instance.init();
+  unawaited(FcmService.instance.init());
   runApp(const DriverApp());
 }
 
