@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import '../api/api.dart';
 import '../theme/theme.dart';
+import '../location_beacon.dart';
 import 'dashboard_tab.dart';
 import 'orders_tab.dart';
 import 'trips_tab.dart';
@@ -24,6 +25,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _pages = const [
       DashboardTab(), OrdersTab(), TripsTab(), CashTab(), ProfileTab(),
     ];
+    // v1.1.2 — start the GPS heartbeat so the customer can track the driver
+    // live during delivery. Backend only broadcasts while a stop is active.
+    LocationBeacon.instance.start();
+  }
+
+  @override
+  void dispose() {
+    LocationBeacon.instance.stop();
+    super.dispose();
   }
   @override
   Widget build(BuildContext context) {

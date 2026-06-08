@@ -164,6 +164,16 @@ class DriverApi {
     _need(await _post('/api/driver/v1/orders/$id/decline', {'reason': reason}));
   }
   Future<void> orderStart(int id) async { _need(await _post('/api/driver/v1/orders/$id/start')); }
+
+  // v1.1.2 — GPS heartbeat so the customer sees the driver live on the map.
+  Future<bool> sendLocation(double lat, double lng) async {
+    try {
+      final j = await _post('/api/driver/v1/location', {'lat': lat, 'lng': lng});
+      return j['success'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
   Future<void> orderConfirm(int id, {required Uint8List? proof, required Uint8List? signature,
       required double cash, required String notes}) async {
     _need(await _post('/api/driver/v1/orders/$id/confirm', {
