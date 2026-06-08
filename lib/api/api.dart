@@ -163,6 +163,11 @@ class DriverApi {
   Future<void> orderDecline(int id, String reason) async {
     _need(await _post('/api/driver/v1/orders/$id/decline', {'reason': reason}));
   }
+  // v1.1.3 — driver accepts / rejects a new assignment before delivery.
+  Future<void> orderAccept(int id) async { _need(await _post('/api/driver/v1/orders/$id/accept')); }
+  Future<void> orderReject(int id, String reason) async {
+    _need(await _post('/api/driver/v1/orders/$id/reject', {'reason': reason}));
+  }
   Future<void> orderStart(int id) async { _need(await _post('/api/driver/v1/orders/$id/start')); }
 
   // v1.1.2 — GPS heartbeat so the customer sees the driver live on the map.

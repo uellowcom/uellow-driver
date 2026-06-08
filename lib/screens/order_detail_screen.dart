@@ -217,20 +217,29 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
   Widget _ctaFor(OrderDetail o, bool ar) {
     if (_busy) return const Center(child: USpinner());
     switch (o.status) {
+      // New assignment — the driver must ACCEPT or REJECT before anything else.
+      case 'offered':
       case 'awaiting_pickup':
         return Row(children: [
           Expanded(child: OutlinedButton(
-            onPressed: () => _doAction(() async => DriverApi.instance.orderDecline(o.id, 'Driver declined'),
-              ar ? 'تم الرفض' : 'Declined'),
-            child: Text(ar ? 'رفض' : 'Decline'))),
+            onPressed: () => _doAction(() async => DriverApi.instance.orderReject(o.id, 'Driver rejected'),
+              ar ? 'تم الرفض' : 'Rejected'),
+            child: Text(ar ? 'رفض' : 'Reject',
+              style: const TextStyle(color: UC.dangerDk, fontWeight: FontWeight.w800)))),
           const SizedBox(width: 8),
           Expanded(flex: 2, child: ElevatedButton.icon(
-            onPressed: () => _doAction(() async => DriverApi.instance.orderPickup(o.id),
-              ar ? 'تم الاستلام' : 'Picked up'),
-            icon: const Icon(Icons.inventory_2, size: 16),
-            label: Text(ar ? 'استلام' : 'Pickup',
+            onPressed: () => _doAction(() async => DriverApi.instance.orderAccept(o.id),
+              ar ? 'تم القبول' : 'Accepted'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: UC.success, foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14)),
+            icon: const Icon(Icons.check_circle_outline, size: 16),
+            label: Text(ar ? 'قبول الطلب' : 'Accept',
               style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)))),
         ]);
+      // Accepted (with the courier) — next action is to START the delivery,
+      // which turns on live tracking for the customer.
+      case 'accepted':
       case 'picked':
         return SizedBox(width: double.infinity, child: ElevatedButton.icon(
           onPressed: () => _doAction(() async => DriverApi.instance.orderStart(o.id),
