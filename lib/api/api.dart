@@ -223,6 +223,23 @@ class DriverApi {
     return TripDetail.fromJson(((j['data'] as Map)['trip'] as Map).cast<String, dynamic>());
   }
 
+  // ── Pickups (collect a trip from the Uellow warehouse) ─────────
+  Future<List<Map<String, dynamic>>> pickups() async {
+    final j = _need(await _get('/api/driver/v1/pickups'));
+    return List<Map<String, dynamic>>.from(
+        (j['data']?['pickups'] as List?) ?? const []);
+  }
+  Future<Map<String, dynamic>> pickupDetail(int id) async {
+    final j = _need(await _get('/api/driver/v1/pickups/$id'));
+    return (j['data'] as Map).cast<String, dynamic>();
+  }
+  Future<Map<String, dynamic>> pickupCollect(int id,
+      {required List<int> orderIds, bool collectMissing = false}) async {
+    final j = _need(await _post('/api/driver/v1/pickups/$id/collect',
+        {'order_ids': orderIds, 'collect_missing': collectMissing}));
+    return (j['data'] as Map).cast<String, dynamic>();
+  }
+
   // ── Cash ───────────────────────────────────────────────────────
   Future<CashReady> cashReady() async {
     final j = _need(await _get('/api/driver/v1/cash/ready'));

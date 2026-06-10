@@ -1,7 +1,7 @@
 name: uellow_driver
 description: Uellow Driver — mobile companion to the carrier portal
 publish_to: 'none'
-version: 1.1.4+7
+version: 1.1.6+9
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -23,6 +23,7 @@ dependencies:
   signature: ^5.5.0
   qr_flutter: ^4.1.0
   geolocator: ^13.0.2
+  mobile_scanner: ^6.0.2  # pickup barcode receiving from the Uellow warehouse
 
 dev_dependencies:
   flutter_test:
@@ -31,3 +32,14 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Tajawal-Black.ttf
+          weight: 900

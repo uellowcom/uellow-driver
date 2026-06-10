@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api/api.dart';
 import '../theme/theme.dart';
+import 'pickups_screen.dart';
 
 class TripsTab extends StatefulWidget {
   const TripsTab({super.key});
@@ -10,11 +11,56 @@ class TripsTab extends StatefulWidget {
 
 class _TripsTabState extends State<TripsTab> {
   Future<List<Trip>>? _f;
+  List<Map<String, dynamic>> _pickups = const [];
   @override
-  void initState() { super.initState(); _f = DriverApi.instance.trips(); }
+  void initState() {
+    super.initState();
+    _f = DriverApi.instance.trips();
+    _loadPickups();
+  }
+  Future<void> _loadPickups() async {
+    try {
+      final v = await DriverApi.instance.pickups();
+      if (mounted) setState(() => _pickups = v);
+    } catch (_) {}
+  }
   Future<void> _refresh() async {
     setState(() => _f = DriverApi.instance.trips());
+    _loadPickups();
     await _f;
+  }
+
+  Widget _pickupBanner(bool ar) {
+    if (_pickups.isEmpty) return const SizedBox.shrink();
+    final n = _pickups.length;
+    final toCollect = _pickups.fold<int>(0,
+        (s, p) => s + ((p['to_collect'] as num?)?.toInt() ?? 0));
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: Material(color: UC.brown, borderRadius: BorderRadius.circular(13),
+        child: InkWell(borderRadius: BorderRadius.circular(13),
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const PickupsScreen()));
+            _loadPickups();
+          },
+          child: Padding(padding: const EdgeInsets.all(13),
+            child: Row(children: [
+              const Icon(Icons.warehouse_outlined, color: UC.yellowSoft, size: 26),
+              const SizedBox(width: 11),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(ar ? 'استلام من مخزن يلو' : 'Pickups from Uellow',
+                    style: const TextStyle(color: Colors.white,
+                        fontWeight: FontWeight.w900, fontSize: 14)),
+                Text(ar ? '$n رحلة · $toCollect طلب للجمع'
+                        : '$n trip(s) · $toCollect to collect',
+                    style: const TextStyle(color: Color(0xFFE9D9A8), fontSize: 11.5)),
+              ])),
+              const Icon(Icons.chevron_right, color: UC.yellowSoft),
+            ]))),
+      ),
+    );
   }
 
   @override
@@ -22,7 +68,9 @@ class _TripsTabState extends State<TripsTab> {
     final ar = DriverApi.instance.lang == 'ar';
     return Scaffold(
       appBar: AppBar(title: Text(ar ? 'الرحلات' : 'Trips')),
-      body: RefreshIndicator(onRefresh: _refresh,
+      body: Column(children: [
+        _pickupBanner(ar),
+        Expanded(child: RefreshIndicator(onRefresh: _refresh,
         child: FutureBuilder<List<Trip>>(future: _f, builder: (_, snap) {
         if (snap.connectionState != ConnectionState.done) return const Center(child: USpinner());
         if (snap.hasError) return Center(child: Text(snap.error.toString(), style: UT.body));
@@ -37,7 +85,9 @@ class _TripsTabState extends State<TripsTab> {
           itemCount: rows.length,
           separatorBuilder: (_, __) => const SizedBox(height: 8),
           itemBuilder: (_, i) => _card(rows[i], ar));
-      })));
+      }))),
+      ]),
+    );
   }
 
   Widget _card(Trip t, bool ar) {

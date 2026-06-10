@@ -43,6 +43,7 @@ class UT {
 ThemeData uellowDriverTheme() {
   return ThemeData(
     useMaterial3: true,
+    fontFamily: 'Tajawal',
     scaffoldBackgroundColor: UC.bg,
     colorScheme: ColorScheme.fromSeed(
       seedColor: UC.yellow, primary: UC.yellow,

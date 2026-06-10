@@ -91,20 +91,14 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
               _row(Icons.person_outline, o.customer, o.customerPhone),
               const SizedBox(height: 10),
               Row(children: [
-                Expanded(child: OutlinedButton.icon(
-                  onPressed: () => _call(o.customerPhone),
-                  icon: const Icon(Icons.phone, size: 16),
-                  label: Text(ar ? 'اتصال' : 'Call'))),
-                const SizedBox(width: 6),
-                Expanded(child: OutlinedButton.icon(
-                  onPressed: () => _wa(o.customerPhone),
-                  icon: const Icon(Icons.chat, size: 16),
-                  label: const Text('WhatsApp'))),
-                const SizedBox(width: 6),
-                Expanded(child: OutlinedButton.icon(
-                  onPressed: () => _sms(o.customerPhone),
-                  icon: const Icon(Icons.sms, size: 16),
-                  label: Text(ar ? 'رسالة' : 'SMS'))),
+                _contactBtn(Icons.phone_rounded, ar ? 'اتصال' : 'Call',
+                    UC.brown, () => _call(o.customerPhone)),
+                const SizedBox(width: 8),
+                _contactBtn(Icons.whatsapp, 'WhatsApp',
+                    const Color(0xFF25D366), () => _wa(o.customerPhone)),
+                const SizedBox(width: 8),
+                _contactBtn(Icons.sms_rounded, ar ? 'رسالة' : 'SMS',
+                    UC.info, () => _sms(o.customerPhone)),
               ]),
             ])),
             // Address
@@ -214,70 +208,104 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     );
   }
 
+  // ── professional contact button (icon over label — always single line) ──
+  Widget _contactBtn(IconData icon, String label, Color color, VoidCallback onTap) {
+    return Expanded(child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(13),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(13),
+          border: Border.all(color: color.withValues(alpha: 0.28), width: 1.2),
+        ),
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 5),
+          Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: color, fontWeight: FontWeight.w800, fontSize: 11.5)),
+        ]),
+      )));
+  }
+
+  // ── CTA builders (consistent, single-line, tactile) ──
+  Widget _ctaSolid(String label, IconData icon, Color bg, Color fg,
+      VoidCallback onTap, {int flex = 1}) {
+    return Expanded(flex: flex, child: SizedBox(height: 54, child: ElevatedButton.icon(
+      onPressed: onTap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: bg, foregroundColor: fg, elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+      icon: Icon(icon, size: 19),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14.5)))));
+  }
+
+  Widget _ctaTint(String label, IconData icon, Color color,
+      VoidCallback onTap, {int flex = 1}) {
+    return Expanded(flex: flex, child: SizedBox(height: 54, child: TextButton.icon(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        backgroundColor: color.withValues(alpha: 0.12), foregroundColor: color,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+      icon: Icon(icon, size: 19),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)))));
+  }
+
   Widget _ctaFor(OrderDetail o, bool ar) {
-    if (_busy) return const Center(child: USpinner());
+    if (_busy) {
+      return const SizedBox(height: 54, child: Center(child: USpinner()));
+    }
     switch (o.status) {
       // New assignment — the driver must ACCEPT or REJECT before anything else.
       case 'offered':
       case 'awaiting_pickup':
         return Row(children: [
-          Expanded(child: OutlinedButton(
-            onPressed: () => _doAction(() async => DriverApi.instance.orderReject(o.id, 'Driver rejected'),
-              ar ? 'تم الرفض' : 'Rejected'),
-            child: Text(ar ? 'رفض' : 'Reject',
-              style: const TextStyle(color: UC.dangerDk, fontWeight: FontWeight.w800)))),
-          const SizedBox(width: 8),
-          Expanded(flex: 2, child: ElevatedButton.icon(
-            onPressed: () => _doAction(() async => DriverApi.instance.orderAccept(o.id),
-              ar ? 'تم القبول' : 'Accepted'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: UC.success, foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14)),
-            icon: const Icon(Icons.check_circle_outline, size: 16),
-            label: Text(ar ? 'قبول الطلب' : 'Accept',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)))),
+          _ctaTint(ar ? 'رفض' : 'Reject', Icons.close_rounded, UC.danger,
+            () => _doAction(() async =>
+                DriverApi.instance.orderReject(o.id, 'Driver rejected'),
+              ar ? 'تم الرفض' : 'Rejected')),
+          const SizedBox(width: 10),
+          _ctaSolid(ar ? 'قبول الطلب' : 'Accept order', Icons.check_circle_rounded,
+            UC.success, Colors.white,
+            () => _doAction(() async => DriverApi.instance.orderAccept(o.id),
+              ar ? 'تم القبول' : 'Accepted'), flex: 2),
         ]);
-      // Accepted (with the courier) — next action is to START the delivery,
-      // which turns on live tracking for the customer.
+      // Accepted (with the courier) — next action is to START the delivery.
       case 'accepted':
       case 'picked':
-        return SizedBox(width: double.infinity, child: ElevatedButton.icon(
-          onPressed: () => _doAction(() async => DriverApi.instance.orderStart(o.id),
-            ar ? 'في الطريق' : 'Started'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: UC.brown, foregroundColor: UC.yellowSoft,
-            padding: const EdgeInsets.symmetric(vertical: 14)),
-          icon: const Icon(Icons.play_arrow, size: 18),
-          label: Text(ar ? 'ابدأ التوصيل' : 'Start delivery',
-            style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15))));
+        return Row(children: [
+          _ctaSolid(ar ? 'ابدأ التوصيل' : 'Start delivery', Icons.navigation_rounded,
+            UC.brown, UC.yellowSoft,
+            () => _doAction(() async => DriverApi.instance.orderStart(o.id),
+              ar ? 'في الطريق' : 'Started')),
+        ]);
       case 'out':
         return Row(children: [
-          Expanded(child: OutlinedButton(
-            onPressed: () => Navigator.pushNamed(context, '/fail', arguments: {'id': o.id}),
-            child: Text(ar ? 'فشل' : 'Fail',
-              style: const TextStyle(color: UC.dangerDk, fontWeight: FontWeight.w800)))),
-          const SizedBox(width: 8),
-          Expanded(flex: 2, child: ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/confirm',
-              arguments: {'id': o.id, 'cash': o.paymentMethod == 'cod' ? o.amount.amount : 0}),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: UC.success, foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14)),
-            icon: const Icon(Icons.check, size: 16),
-            label: Text(ar ? 'تأكيد التسليم' : 'Confirm delivery',
-              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)))),
+          _ctaTint(ar ? 'فشل' : 'Fail', Icons.report_gmailerrorred_rounded, UC.danger,
+            () => Navigator.pushNamed(context, '/fail', arguments: {'id': o.id})),
+          const SizedBox(width: 10),
+          _ctaSolid(ar ? 'تأكيد التسليم' : 'Confirm delivery',
+            Icons.check_circle_rounded, UC.success, Colors.white,
+            () => Navigator.pushNamed(context, '/confirm', arguments: {
+              'id': o.id, 'cash': o.paymentMethod == 'cod' ? o.amount.amount : 0}),
+            flex: 2),
         ]);
       case 'delivered':
         return Container(
-          padding: const EdgeInsets.all(12), alignment: Alignment.center,
+          height: 50, alignment: Alignment.center,
           decoration: BoxDecoration(color: UC.successBg,
-            borderRadius: BorderRadius.circular(12)),
+            borderRadius: BorderRadius.circular(15)),
           child: Text(ar ? '✓ تم التسليم' : '✓ Delivered',
-            style: const TextStyle(color: UC.successDk, fontWeight: FontWeight.w900)));
+            style: const TextStyle(color: UC.successDk,
+              fontWeight: FontWeight.w900, fontSize: 14.5)));
       default:
         return Container(
-          padding: const EdgeInsets.all(12), alignment: Alignment.center,
-          decoration: BoxDecoration(color: UC.bg, borderRadius: BorderRadius.circular(12)),
+          height: 50, alignment: Alignment.center,
+          decoration: BoxDecoration(color: UC.bg,
+            borderRadius: BorderRadius.circular(15)),
           child: Text(o.statusLabel.t(ar ? 'ar' : 'en'),
             style: const TextStyle(fontWeight: FontWeight.w900)));
     }
