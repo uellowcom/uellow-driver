@@ -1,0 +1,2 @@
+/root/uellow_driver/android/app/.cxx/RelWithDebInfo/2d39l721/x86_64/CMakeFiles/edit_cache.dir
+/root/uellow_driver/android/app/.cxx/RelWithDebInfo/2d39l721/x86_64/CMakeFiles/rebuild_cache.dir

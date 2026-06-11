@@ -1,0 +1,1 @@
+/root/uellow_driver/build/app/intermediates/cxx/RelWithDebInfo/2d39l721/obj/x86_64

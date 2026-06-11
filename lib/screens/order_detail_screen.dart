@@ -94,7 +94,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
                 _contactBtn(Icons.phone_rounded, ar ? 'اتصال' : 'Call',
                     UC.brown, () => _call(o.customerPhone)),
                 const SizedBox(width: 8),
-                _contactBtn(Icons.whatsapp, 'WhatsApp',
+                _contactBtn(Icons.chat, 'WhatsApp',
                     const Color(0xFF25D366), () => _wa(o.customerPhone)),
                 const SizedBox(width: 8),
                 _contactBtn(Icons.sms_rounded, ar ? 'رسالة' : 'SMS',
